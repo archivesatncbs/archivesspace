@@ -157,11 +157,16 @@ RSpec.shared_examples 'using keyboard shortcuts on an Infinite Tree edit page' d
 
   it 'closes the root record to its readonly view with Shift+Ctrl+X' do
     visit "#{edit_path}#{root_hash}"
+    install_close_shortcut_diagnostics # TEMPORARY DIAGNOSTICS (ANW-3137)
     wait_for_infinite_tree_loaded
 
     press_close_shortcut
 
-    expect(page).to have_current_path(show_path)
+    begin
+      expect(page).to have_current_path(show_path)
+    ensure
+      print_close_shortcut_diagnostics # TEMPORARY DIAGNOSTICS (ANW-3137)
+    end
     wait_for_infinite_tree_loaded
     aggregate_failures do
       expect(page.evaluate_script('window.location.hash')).to eq(root_hash)
@@ -174,11 +179,16 @@ RSpec.shared_examples 'using keyboard shortcuts on an Infinite Tree edit page' d
 
   it 'closes a child record to its readonly view with Shift+Ctrl+X' do
     visit "#{edit_path}#{child_record_hash}"
+    install_close_shortcut_diagnostics # TEMPORARY DIAGNOSTICS (ANW-3137)
     wait_for_infinite_tree_loaded
 
     press_close_shortcut
 
-    expect(page).to have_current_path(show_path)
+    begin
+      expect(page).to have_current_path(show_path)
+    ensure
+      print_close_shortcut_diagnostics # TEMPORARY DIAGNOSTICS (ANW-3137)
+    end
     wait_for_infinite_tree_loaded
     aggregate_failures do
       expect(page.evaluate_script('window.location.hash')).to eq(child_record_hash)

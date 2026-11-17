@@ -45,6 +45,120 @@ module KeyboardShortcutHelpers
     end
   end
 
+  # TEMPORARY DIAGNOSTICS (ANW-3137): records what happens around a close
+  # shortcut keypress on Infinite Tree pages, to find why it sometimes
+  # doesn't navigate in CI. Entries go to sessionStorage so they survive the
+  # navigation and can be printed whether or not the example passes.
+  # Remove together with print_close_shortcut_diagnostics.
+  def install_close_shortcut_diagnostics
+    page.execute_script(<<~JS)
+      (function () {
+        var KEY = 'closeShortcutDiagnostics';
+        sessionStorage.setItem(KEY, '[]');
+
+        var log = function (message) {
+          var entries = JSON.parse(sessionStorage.getItem(KEY) || '[]');
+          entries.push(new Date().toISOString().slice(11, 23) + ' ' + message);
+          sessionStorage.setItem(KEY, JSON.stringify(entries));
+        };
+
+        var describe = function (el) {
+          if (!el) return 'none';
+          var name = el.tagName.toLowerCase();
+          if (el.id) name += '#' + el.id;
+          if (typeof el.className === 'string' && el.className.trim()) {
+            name += '.' + el.className.trim().split(/\\s+/).join('.');
+          }
+          return name;
+        };
+
+        var pane = document.querySelector('#infinite-tree-record-pane');
+        var tree = document.querySelector('#infinite-tree-component');
+
+        var state = function () {
+          return 'href=' + location.href +
+            ' paneBlocked=' + (pane ? pane.classList.contains('blocked') : 'no-pane') +
+            ' paneForm=' + describe(pane && pane.querySelector('form.aspace-record-form')) +
+            ' firstRecordForm=' + describe(document.querySelector('form.aspace-record-form')) +
+            ' modalShown=' + !!document.querySelector('.modal.show') +
+            ' active=' + describe(document.activeElement) +
+            ' treeReadonlyPath=' + (tree ? tree.dataset.readonlyPath : 'no-tree');
+        };
+
+        log('installed ' + state());
+
+        var isCloseKey = function (event) {
+          return event.ctrlKey && event.shiftKey && event.key.toLowerCase() === 'x';
+        };
+
+        window.addEventListener('keydown', function (event) {
+          if (isCloseKey(event)) {
+            log('keydown before app handler: which=' + event.which + ' target=' + describe(event.target) + ' ' + state());
+          }
+        }, true);
+
+        window.addEventListener('keydown', function (event) {
+          if (isCloseKey(event)) {
+            log('keydown after app handler: defaultPrevented=' + event.defaultPrevented + ' ' + state());
+          }
+        });
+
+        var originalClose = AS.closeRecordForm;
+        AS.closeRecordForm = function () {
+          log('AS.closeRecordForm called ' + state());
+          var result = originalClose.apply(this, arguments);
+          log('AS.closeRecordForm returned href=' + location.href);
+          return result;
+        };
+
+        if (window.navigation) {
+          window.navigation.addEventListener('navigate', function (event) {
+            log('navigate: type=' + event.navigationType + ' hashChange=' + event.hashChange +
+              ' destination=' + event.destination.url);
+          });
+          window.navigation.addEventListener('navigatesuccess', function () {
+            log('navigatesuccess href=' + location.href);
+          });
+          window.navigation.addEventListener('navigateerror', function (event) {
+            log('navigateerror: ' + event.message);
+          });
+        } else {
+          log('no Navigation API');
+        }
+
+        window.addEventListener('hashchange', function (event) {
+          log('hashchange: ' + event.oldURL + ' -> ' + event.newURL);
+        });
+        window.addEventListener('beforeunload', function () { log('beforeunload'); });
+        window.addEventListener('pagehide', function () { log('pagehide'); });
+
+        if (pane) {
+          new MutationObserver(function (mutations) {
+            mutations.forEach(function (mutation) {
+              if (mutation.type === 'attributes') {
+                log('pane class=' + pane.className);
+              } else {
+                log('pane content replaced: form=' + describe(pane.querySelector('form.aspace-record-form')));
+              }
+            });
+          }).observe(pane, { attributes: true, attributeFilter: ['class'], childList: true });
+        }
+      })();
+    JS
+  end
+
+  # TEMPORARY DIAGNOSTICS (ANW-3137): see install_close_shortcut_diagnostics.
+  def print_close_shortcut_diagnostics
+    entries = page.evaluate_script("sessionStorage.getItem('closeShortcutDiagnostics')")
+    lines = entries ? JSON.parse(entries) : ['(no entries)']
+    $stdout.puts "\n=== Close shortcut diagnostics: #{RSpec.current_example.full_description} ==="
+    lines.each { |line| $stdout.puts "  #{line}" }
+    $stdout.puts "  final href=#{page.current_url}"
+    $stdout.puts "=== end ===\n"
+  rescue StandardError => e
+    $stdout.puts "Close shortcut diagnostics unavailable: #{e.class}: #{e.message}"
+  end
+
   def press_ctrl_shift(key)
     page.driver.browser.action
       .key_down(:control).key_down(:shift).send_keys(key)
