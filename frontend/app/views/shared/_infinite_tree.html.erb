@@ -34,6 +34,7 @@
   data-batch-size="<%= Rails.configuration.infinite_tree_batch_size %>"
   data-is-read-only="<%= read_only %>"
   data-root-uri="<%= root_record.uri %>"
+  data-readonly-path="<%= url_for(:controller => root_type.pluralize, :action => :show, :id => root_record.id) unless read_only %>"
   data-record-type="<%= root_type %>"
   data-child-type="<%= child_type %>"
   data-new-child-placeholder-title="<%= new_child_placeholder_title %>"

@@ -1025,6 +1025,31 @@ AS.clickRecordFormSaveButton = function () {
   if (saveButton) saveButton.click();
 };
 
+AS.closeRecordForm = function () {
+  if (document.querySelector('.modal.show')) return;
+
+  const focused = document.activeElement;
+  const form =
+    (focused && focused.closest('form.aspace-record-form')) ||
+    document.querySelector('form.aspace-record-form');
+  if (!form) return;
+
+  let target = form.dataset.readonlyPath;
+
+  if (form.closest('#infinite-tree-record-pane')) {
+    // An inline "new child" form sets the hash to #new: nothing to close yet.
+    if (location.hash === '#new') return;
+
+    const tree = document.querySelector('#infinite-tree-component');
+    target =
+      tree && tree.dataset.readonlyPath
+        ? tree.dataset.readonlyPath + location.hash
+        : null;
+  }
+
+  if (target) window.location.href = target;
+};
+
 // shortcuts
 $(function () {
   var initFormShortcuts = function () {
@@ -1073,8 +1098,7 @@ $(function () {
       }
       case 'x': {
         event.preventDefault();
-        const readonlyPath = location.pathname.replace(/\/edit$/, '');
-        window.location.href = readonlyPath + location.hash;
+        AS.closeRecordForm();
         break;
       }
     }
