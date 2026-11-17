@@ -47,15 +47,16 @@ module MigrationUtils
   # component from what the earlier display rules showed (migration 180), so that existing
   # images and links keep showing:
   #
-  #   Display thumbnail: the first published file version that is, in order of preference,
-  #     1. marked is_representative
-  #     2. use statement image-thumbnail
-  #     3. an http(s) file URI with xlink show attribute embed that is not a IIIF manifest
-  #     4. file format jpeg or gif
+  #   Display thumbnail: a published file version, in order of preference
+  #     1. the first marked is_representative
+  #     2. the first with use statement image-thumbnail
+  #     3. the first with an http(s) file URI and xlink show attribute embed that is not a IIIF manifest
+  #     4. the last with a data: file URI and xlink show attribute embed (4.2.1's older display)
+  #     5. the first with file format jpeg or gif
   #
   #   Display link: the file version following the display thumbnail, if published; with no
-  #     display thumbnail, the last published http(s) or data: file version that is not embedded
-  #     and not a IIIF manifest.
+  #     display thumbnail, or one from 4, the last published http(s) or data: file version that is
+  #     not embedded and not a IIIF manifest.
   module FileVersionDisplayFlags
     ::FileVersionDisplayFlags = MigrationUtils::FileVersionDisplayFlags
 
@@ -85,18 +86,18 @@ module MigrationUtils
     # Returns [thumbnail, link]: the rows to flag, each possibly nil
     def self.choose(file_versions, enum_ids)
       published = file_versions.select { |fv| fv[:publish] == 1 }
+      last_link = published.select { |fv| legacy_link?(fv, enum_ids) }.last
 
       thumbnail = thumbnail_tiers(enum_ids).lazy.map { |tier| published.find(&tier) }.find(&:itself)
+      return [thumbnail, published_following(file_versions, thumbnail)] if thumbnail
 
-      link =
-        if thumbnail
-          following = file_versions[file_versions.index(thumbnail) + 1]
-          following if following && following[:publish] == 1
-        else
-          published.select { |fv| legacy_link?(fv, enum_ids) }.last
-        end
+      older_display_image = published.select { |fv| embedded_data_uri?(fv, enum_ids) }.last
+      return [older_display_image, last_link] if older_display_image
 
-      [thumbnail, link]
+      image = published.find { |fv| enum_ids[:images].include?(fv[:file_format_name_id]) }
+      return [image, published_following(file_versions, image)] if image
+
+      [nil, last_link]
     end
 
     def self.thumbnail_tiers(enum_ids)
@@ -106,8 +107,16 @@ module MigrationUtils
         ->(fv) {
           file_uri(fv).start_with?('http') && fv[:xlink_show_attribute_id] == enum_ids[:embed] && !iiif_manifest?(fv, enum_ids)
         },
-        ->(fv) { enum_ids[:images].include?(fv[:file_format_name_id]) },
       ]
+    end
+
+    def self.embedded_data_uri?(fv, enum_ids)
+      file_uri(fv).start_with?('data:') && fv[:xlink_show_attribute_id] == enum_ids[:embed]
+    end
+
+    def self.published_following(file_versions, fv)
+      following = file_versions[file_versions.index(fv) + 1]
+      following if following && following[:publish] == 1
     end
 
     def self.legacy_link?(fv, enum_ids)
