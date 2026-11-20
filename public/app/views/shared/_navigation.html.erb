@@ -9,6 +9,9 @@
       <div class="collapse navbar-collapse top-bar pl-4" id="collapsemenu">
         <ul class="navbar-nav mr-auto">
           <%# TODO: add class="active" if we're on that page %>
+          <li class="nav-item p-2">
+           <a class="nav-link" href="<%= AppConfig[:public_proxy_url] %>">Home</a>
+          </li>
           <% $MAIN_MENU.each do |link| %>
             <li class="nav-item p-2">
               <a class="nav-link" href="<%= app_prefix(link[0]) %>"><%= t(link[1]) %></a>

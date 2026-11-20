@@ -16,9 +16,12 @@
 
 // Adding these first so they can override bootstrap variables.
 // See: https://stackoverflow.com/questions/11773583/can-i-override-sass-variables-after-they-have-been-imported
-@import 'archivesspace/fonts';
-@import 'archivesspace/colors';
-@import 'archivesspace/variables';
+// @import 'archivesspace/fonts';
+// @import 'archivesspace/colors';
+// @import 'archivesspace/variables';
+@import 'ancbs/fonts';
+@import 'ancbs/colors';
+@import 'ancbs/variables';
 
 @import 'bootstrap/scss/bootstrap';
 @import 'archivesspace/bootstrap-overrides';
@@ -27,17 +30,42 @@
 
 /* stylelint-disable-next-line scss/load-no-partial-leading-underscore */
 @import 'foundation/_functions';
-@import 'archivesspace/aspace';
-@import 'archivesspace/record-type-badge';
-@import 'archivesspace/result-linked-instances';
-@import 'archivesspace/result-representative-file-version';
+// @import 'archivesspace/aspace';
+// @import 'archivesspace/record-type-badge';
+// @import 'archivesspace/result-linked-instances';
+// @import 'archivesspace/result-representative-file-version';
+@import 'ancbs/ancbs';
+@import 'ancbs/record-type-badge';
+@import 'ancbs/result-linked-instances';
+@import 'ancbs/result-representative-file-version';
 
-@import 'archivesspace/infinite-records';
-@import 'archivesspace/infinite-tree';
+// @import 'archivesspace/infinite-records';
+// @import 'archivesspace/infinite-tree';
+// @import 'archivesspace/largetree';
+// @import 'archivesspace/mixed-content';
+// @import 'archivesspace/read-more-notes';
+@import 'ancbs/infinite-records';
+@import 'ancbs/infinite-tree';
 @import 'archivesspace/largetree';
-@import 'archivesspace/mixed-content';
-@import 'archivesspace/read-more-notes';
+@import 'ancbs/mixed-content';
+@import 'ancbs/read-more-notes';
 
-@import 'archivesspace/helpers';
+// @import 'archivesspace/helpers';
+@import 'ancbs/helpers.scss';
 
-@import 'archivesspace/print';
+// @import 'archivesspace/print';
+@import 'ancbs/print';
+
+
+.largetree-container .current td, .largetree-container .current .table-cell {
+    background-color: $ancbs-white4;
+}
+
+.largetree-container .current {
+  outline: 1px solid $ancbs-deepbrown;
+}
+
+.node.current > .node-row > .node-body {
+  position: relative;
+  background-color: $ancbs-white4;
+}

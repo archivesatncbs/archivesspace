@@ -1,10 +1,20 @@
 <div class="container-fluid panel-footer p-3 bg-lightgray border-top-default">
   <div class="row">
      <div class="col-md-12">
-       <p class="footer-items mb-0"><%= t("footer.staff_interface_html", staff_url: AppConfig[:frontend_proxy_url]) %>
-         | <%= t("footer.archivesspace_home_html") %>
-         | <%= ERB::Util.html_escape(ASConstants.VERSION) %>
-         <% if AppConfig[:feedback_url] && !AppConfig[:feedback_url].blank? %> | <%= t("footer.feedback_html", :feedback_url => AppConfig[:feedback_url]) %><% end %></p>
+     <p class="footer-items mb-0">
+            Except where otherwise noted, all archival descriptions on this website are licensed under<a class="link-underline-opacity-0-hover" href="https://creativecommons.org/licenses/by-sa/4.0/"><img class="logo p-2" height="40px" src="<%= asset_path("cc-by-sa.svg") %>"> </a>
+         </p>
+       <p class="footer-items mb-0">
+        <a href="<%= AppConfig[:public_proxy_url] %>">Catalogue</a>
+        | <a href="<%= I18n.t("brand.access_url").html_safe %>">How to Access</a>
+         </p>
+          <p class="footer-items mb-0">
+            <a href="<%= I18n.t("brand.url").html_safe %>">Archives at NCBS</a>
+            | <%= I18n.t("brand.start_year") %> - <%= Date.current.year %>
+         </p>
+         <p class="footer-items mb-0">
+          Powered by <a href="https://archivesspace.org/"><img class="logo p-2" height="40px" src="<%= asset_path("ArchivesSpaceLogo.svg") %>"></a>
+         </p>
      </div>
   </div>
 </div>
